@@ -10,10 +10,10 @@
 
 version=2.0.22
 
-# setup trusted paths for dependancies (like rsync, grub, fdisk, etc)
+# asetetaan luotettu polku riippuvuuksien takia (kuten rsync, grub, fdisk, jne)
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-# auto run grub-install if grub detected
+# autoaja grub-install, jos grub löydetään
 grub_auto=1
 
 PGM=`basename $0`
@@ -23,7 +23,7 @@ rsync_options="--force -rltWDEHXAgoptx"
 
 if [ `id -u` != 0 ]
 then
-    echo -e "$PGM needs to be run as root.\n"
+    echo -e "$PGM täytyy suorittaa rootina.\n"
     exit 1
 fi
 
@@ -48,21 +48,21 @@ confirm()
 	then
 		return 0
 	fi
-	printf "\n%s  (yes/no): " "$1"
+	printf "\n%s  ((k)yllä/(e)i): " "$1"
 	read resp
-	if [ "$resp" = "y" ] || [ "$resp" = "yes" ]
+	if [ "$resp" = "k" ] || [ "$resp" = "yes" ]
 	then
 		return 0
 	fi
 	if [ "$2" == "abort" ]
 	then
-		echo -e "Aborting!\n"
+		echo -e "keskeytetään!\n"
 		exit 0
 	fi
 	return 1
 	}
 
-# sfdisk is in fdisk package
+# sfdisk löytyy fdisk paketista
 commands="rsync parted fdisk findmnt column fsck.vfat"
 packages="rsync parted util-linux mount bsdmainutils dosfstools"
 need_packages=""
@@ -73,7 +73,7 @@ do
 	if ! command -v $cmd > /dev/null
 	then
 		pkg=$(echo "$packages" | cut -d " " -f $idx)
-		printf "%-30s %s\n" "Command not found: $cmd" "Package required: $pkg"
+		printf "%-30s %s\n" "KOmentoa ei löytynyt: $cmd" "Vaaditaan: $pkg"
 		need_packages="$need_packages $pkg"
 	fi
 	((++idx))
@@ -81,7 +81,7 @@ done
 
 if [ "$need_packages" != "" ]
 then
-	confirm "Do you want to apt-get install the packages?" "abort"
+	confirm "Sallitko apt-get install paketille?" "abort"
 	apt-get install -y --no-install-recommends $need_packages
 fi
 
@@ -95,7 +95,7 @@ HOSTNAME=`hostname`
 usage()
 	{
 	echo $"
-usage: $PGM sdN {-v|--verbose} {-f|--force-initialize} {-f2}
+käyttö:  $PGM sdN {-v|--verbose} {-f|--force-initialize} {-f2}
          {-p|--p1-size size} {-u|--unattended} {-U|--Unattended} {-q|--quiet}
          {-s|--setup host} {-e|--edit-fstab sdX } {-m|--mountdir dir }
          {-L|--label-partitions label} {-l|--leave-sd-usb-boot}
@@ -143,24 +143,34 @@ usage: $PGM sdN {-v|--verbose} {-f|--force-initialize} {-f2}
     -x      - use set -x for very verbose bash shell script debugging
     -V      - print rpi-clone version.
 
-  Clone a booted file system to a destination disk which is bootable.
+  Kloonaa buuttaavan tiedostojärjestelmä ja tekee myös kohdelevystä buuttaavaan.
 
-  The destination disk is a SD card (USB card reader) or USB disk 'sdN' plugged
-  into a USB port.  The 'sdN' name should be a full disk name like sda and not
-  a partition name like sda1.  $PGM works on a Raspberry Pi and can work on
-  other systems.  For a destination disk that shows up as sda, run:
+  Kohdelevy on SD-muistikortti (USB-kortilukijassa) tai USB-levy 'sdN' kytkettynä
+  USB-porttiin. Nimi 'sdN' täytyy olla täydellinen levynimi. kuten sda, ei osionimi 
+  kuten sda1. 
+  
+  $PGM toimii Raspberry Pi'ssä ja se voi toimia muissakin järjestelmissä.
+  
+  Jos kohdelevy olisi sda, niin komenna
 
     $ sudo rpi-clone sda
 
-  Clones can be from a booted SD card or USB disk.  For a description, example
-  clone runs and example usage of above options, see the README.md at:
+  Buuttaava SD-muotikortiltti tai USB-levy voidaan kloonata. Kuvausksen, esimerkkejä loonauksesta
+  ja käyttöesimerkkejä löydät alkuperäisestä README.md tiedosta osoitteessa:
 
       https://github.com/billw2/rpi-clone
 
+  Tämä versio on suomeksi käännetty fork osoitteessa:
+  
+      https://github.com/eksiscloud/rpi-clone/
+  
   A line logging a $PGM run is written to $clone_log.
 
-  Download:
+  Lataa (alkuperäinen ja ajantasainen):
     git clone https://github.com/billw2/rpi-clone
+  
+  Suomenkielisen forkin saa ladattua:
+    git clone https://github.com/eksiscloud/rpi-clone/
 "
 	exit 1
 	}
@@ -239,14 +249,14 @@ unmount_or_abort()
 	then
 		return
 	fi
-	qprintf "\n  $2\n  The clone cannot proceed unless it is unmounted."
+	qprintf "\n  $2\n  Kloonia ei voida tehdä, jos sitä ei unmountata."
 
-	if confirm "Do you want to unmount $1?" "abort"
+	if confirm "Haluatko irrottaa levyn $1?" "abort"
 	then
 		if ! umount $1
 		then
-			echo "$PGM could not unmount $1."
-			echo -e "Aborting!\n"
+			echo "$PGM ei saanut irrotettua $1."
+			echo -e "Keskeytetään!\n"
 			exit 0
 		fi
 	fi
@@ -260,26 +270,26 @@ unmount_list()
 	fi
 	for dir in $1
 	do
-		qecho "  unmounting $dir"
+		qecho "  irroitetaan $dir"
 		if ! umount $dir
 		then
-			qecho "  Failed to unmount: $dir"
+			qecho "  Irrottaminen epäonnistui: $dir"
 		fi
 	done
 	}
 
 mount_partition()
 	{
-	qecho "  Mounting $1 on $2"
+	qecho "  Liittää $1 paikkaan $2"
 
 	if ! mount $1 $2
 	then
-		echo "    Mount failure of $1 on $2."
+		echo "    $1 liittäminen epäonnistui paikkaan $2."
 		if [ "$3" != "" ]
 		then
 			unmount_list $3
 		fi
-		echo "Aborting!"
+		echo "Keskeytetään!"
 		exit 1
 	fi
 	}
@@ -328,8 +338,8 @@ print_partitions()
 	readable_MB $src_disk_size "512" src_size_readable
 	readable_MB $dst_disk_size "512" dst_size_readable
 
-	printf "\n%-43s%s" "Booted disk: $src_disk $src_size_readable" \
-				"Destination disk: $dst_disk $dst_size_readable"
+	printf "\n%-43s%s" "Boottilevy: $src_disk $src_size_readable" \
+				"Kohdelevy: $dst_disk $dst_size_readable"
 	echo $"
 ---------------------------------------------------------------------------"
 	out=$'Part, Size,FS,Label         ,Part, Size,FS,Label\n'
@@ -361,8 +371,8 @@ print_partitions()
 	if ((alt_root_part_num > 0))
 	then
 		echo $"
-** Assuming destination root partition for the clone is $dst_part_base$root_part_num
-   The root FS mount is not from booted $src_disk.  It is ${src_root_dev#/dev/}"
+** Oletetaan, että kloonin kohteena oleva juuriosio on $dst_part_base$root_part_num
+   Juuren FS mount ei ole buuttaavalta $src_disk.  Se on ${src_root_dev#/dev/}"
 
 	fi
 	echo $"---------------------------------------------------------------------------"
@@ -482,25 +492,25 @@ print_options()
 	if ((force_sync))
 	then
 		printf "%-22s : %s\n" "-F" \
-				"forcing clone to skip some errors."
+				"pakotetaan kloonin ohittamaan joitain virheitä."
 	fi
 
 	if ((force_2_parts))
 	then
 		printf "%-22s : %s\n" "-f2" \
-				"force initialize to first two partitions only."
+				"pakotetaan ottamaan käyttöön vain kaksi ensimmäistä osiota."
 	fi
 
 	if ((p1_size_new > 0))
 	then
 		printf "%-3s%-19s : %s %s %s\n" "-p " "$p1_size_arg" \
-				"resize /boot to" "$p1_size_new" "blocks of 512 Bytes."
+				"muutetaan /boot kokoon" "$p1_size_new" "blocks of 512 Bytes."
 	fi
 
 	if [ "$edit_fstab_name" != "" ]
 	then
 		printf "%-22s : %s\n" "-e clone fstab edit" \
-				"edit $src_part_base device entries to $edit_fstab_name."
+				"muokkaa $src_part_base device merkintöjä $edit_fstab_name."
 	fi
 
 	if [ "$ext_label" != "" ]
