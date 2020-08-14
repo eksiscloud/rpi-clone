@@ -1,22 +1,24 @@
 #!/bin/bash
 
-# Usage:  rpi-clone-setup {-t|--test} hostname
-#    eg:  sudo rpi-clone-setup bozo
+# Käyttö:  rpi-clone-setup {-t|--test} hostname
+#    esim:  sudo rpi-clone-setup bozo
 #
-# This script is automatically run by rpi-clone (when it is given -s options)
-# to setup an alternate hostname.  A cloned file system mounted on /mnt/clone
-# is expected unless testing with the -t option.
+# rpi-cone ajaa automaattisesti tämän skriptin (kun on annettu -s optio)
+# asettaakseem vaihtoehtoisen host namen. Kloonattu järjestelmä mountataan
+# hakemistoon /mnt/clone, jos ei tehtä testi valinnalla -t.
 #
-# Or, this script can be run by hand at the end of a clone when rpi-clone
-# pauses with the cloned file systems still mounted on /mnt/clone.
+# Tai scripti voidaan ajaa käsin kloonaamisen loputtua, kun rpi-cloe
+# pitää tauon ja kloonattu tiedostojärjestelmä on edelleen mountattuna
+# hakemistossa /mn/clone.
 #
-# Or, run this script by hand with -t to process files in test directories
-# under /tmp/clone-test.  Run -t and look at the files to see if the files
-# have been edited OK.
-#   eg:  sudo rpi-clone-setup -t bozo
+# Tai scriptin voi ajaa käsin valitsimella -t, jolloin tiedostot käsitellään
+# testihakemistoon /tmp/clone-test. Aja -t nähdäksesi onko tietostot käsitelty
+# oikein.
+#   esim:  sudo rpi-clone-setup -t bozo
 #
-# This is a starter script that handles only /etc/hosts and /etc/hostname.
-# Make sure the script works correctly for your /etc/hosts file.
+# Tämä on käynnistysscripti joka käsittelee vain tiedostoja /etc/hosts ja
+# /etc/hostsname. Varmista, että sccripti työskentelee oikein /etc/hosts
+# tiedostosi kanssa.
 #
 # If adding a customization for another file:
 #    Add the file to file_list.
@@ -34,22 +36,22 @@ PGM=`basename $0`
 
 if [ `id -u` != 0 ]
 then
-	echo "You must be root to run $PGM"
+	echo "Sinun täytyy olla root ajaaksesi $PGM"
 	exit 0
 fi
 
 function usage
 	{
-	echo "Usage: $PGM hostname  {-t|--test}"
-	echo "   Eg:  $PGM rpi1"
-	echo "   Modify files appropriate to set up for a new host."
-	echo "   Files handled are:"
+	echo "Käyttö: $PGM hostname  {-t|--test}"
+	echo "   Esim:  $PGM rpi1"
+	echo "   Muokkaa tiedostoja tarpeen mukaan asettaaksesi uuden hostin."
+	echo "   Käsitellyt tiedostot ovat:"
 	for file in $file_list
 	do
 		echo "        $file"
 	done
 	echo ""
-	echo "If testing (-t flag) files are copied and processed to $clone_test"
+	echo "Jos testaat (-t lippu) niin tiedostot on kopioitu ja käsitelty hakemistoon $clone_test"
 	echo ""
 	exit 0
 	}
@@ -64,7 +66,7 @@ do
 		*)
 			if [ "$newhost" != "" ]
 			then
-				echo "Bad args"
+				echo "Väärät argumentit"
 				usage
 			fi
 			newhost=$1
@@ -75,7 +77,7 @@ done
 
 if [ "$newhost" = "" ]
 then
-	echo -e "You must specify a target hostname\n"
+	echo -e "Sinun täytyy antaa kohteen hostname\n"
 	usage
 fi
 
@@ -83,8 +85,8 @@ echo -e "\t$newhost\t- target hostname"
 
 if ((!testing)) && [ ! -d /mnt/clone/etc ]
 then
-	echo "A destination clone file system is not mounted on /mnt/clone"
-	echo "Aborting!"
+	echo "Kohteena olevaa kloonattua tiedostojärjestelmää ei saatu mountattua hakemistoon /mnt/clone"
+	echo "Keskeytetään!"
 	exit 0
 fi
 
@@ -97,13 +99,13 @@ then
 	mkdir -p $clone/etc
 
 	echo "**********************************************"
-	echo "Testing setup: copying files to $clone"
+	echo "Testiasetukset: kopioidaan tiedostot hakemistoon $clone"
 	for file in $file_list
 	do
 		echo "    cp /$file $clone/$file"
 		cp /$file $clone/$file
 	done
-	echo "This test run will modify those files."
+	echo "Testiajo muokkaa noita tiedostoja."
 	echo "**********************************************"
 	echo ""
 fi
@@ -130,13 +132,13 @@ sed -i s/"$HOSTNAME"/"$newhost"/ hosts
 #
 # Read it back to verify.
 #
-echo "$clone/etc/hosts - set new hostname \"$newhost\" in lines: "
+echo "$clone/etc/hosts - asettaa uuden hostnamen \"$newhost\" riveille: "
 LINE=`grep $newhost hosts`
 echo -e "$LINE\n"
 
 
 ##
-# Add more customizations if needed.
+# Voit lisätä enemmän kustomointeja, jos haluat.
 #
 
 
